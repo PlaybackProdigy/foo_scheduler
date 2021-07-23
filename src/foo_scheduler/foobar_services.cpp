@@ -4,6 +4,52 @@
 #include "definitions.h"
 #include "foobar_stream.h"
 
+static const wchar_t* WND_CLASS = L"FOOSCHEDULERUNISONCLASS";
+static const wchar_t* WND_NAME = L"FOOSCHEDULERUNISONWINDOW";
+
+const enum WM_UNISON
+{
+	WM_US_DISABLE_SCHEDULER = WM_APP + 1,
+	WM_US_ENABLE_SCHEDULER
+};
+
+static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message) {
+		case WM_US_DISABLE_SCHEDULER:
+		case WM_US_ENABLE_SCHEDULER:
+		{
+			auto& model = ServiceManager::Instance().GetModel();
+			auto state = model.GetState();
+			state.schedulerEnabled = message == WM_US_ENABLE_SCHEDULER;
+			model.SetState(state);
+			return 0;
+		}
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+}
+
+static ATOM registerClass(HINSTANCE hInstance)
+{
+	WNDCLASSEX wcex = { sizeof(WNDCLASSEX) };
+	wcex.lpfnWndProc	= wndProc;
+	wcex.hInstance		= hInstance;
+	wcex.lpszClassName	= WND_CLASS;
+	return RegisterClassEx(&wcex);
+}
+
+static HWND createWindow()
+{
+	const HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(NULL);
+	if (registerClass(hInstance) == 0) {
+		return NULL;
+	}
+	return CreateWindow(WND_CLASS, WND_NAME, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
+}
+
+static HWND s_msgWindow = NULL;
+
 //------------------------------------------------------------------------------
 // PluginInitQuit
 //------------------------------------------------------------------------------
@@ -11,11 +57,16 @@
 void PluginInitQuit::on_init()
 {
 	ServiceManager::Instance().GetRootController().Init();
+
+	s_msgWindow = createWindow();
 }
 
 void PluginInitQuit::on_quit()
 {
 	ServiceManager::Instance().GetRootController().Shutdown();
+
+	DestroyWindow(s_msgWindow);
+	UnregisterClass(WND_CLASS, (HINSTANCE)GetModuleHandle(NULL));
 }
 
 //------------------------------------------------------------------------------
