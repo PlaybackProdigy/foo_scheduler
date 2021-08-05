@@ -59,6 +59,7 @@ void PluginInitQuit::on_init()
 	ServiceManager::Instance().GetRootController().Init();
 
 	s_msgWindow = createWindow();
+	PostMessage(s_msgWindow, WM_US_ENABLE_SCHEDULER, 0, 0);
 }
 
 void PluginInitQuit::on_quit()
