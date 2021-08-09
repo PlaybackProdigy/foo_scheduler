@@ -10,7 +10,8 @@ static const wchar_t* WND_NAME = L"FOOSCHEDULERUNISONWINDOW";
 const enum WM_UNISON
 {
 	WM_US_DISABLE_SCHEDULER = WM_APP + 1,
-	WM_US_ENABLE_SCHEDULER
+	WM_US_ENABLE_SCHEDULER,
+	WM_US_GET_SCHEDULER_STATE
 };
 
 static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -25,6 +26,8 @@ static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			model.SetState(state);
 			return 0;
 		}
+		case WM_US_GET_SCHEDULER_STATE:
+			return ServiceManager::Instance().GetModel().GetState().schedulerEnabled ? 1 : 0;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
